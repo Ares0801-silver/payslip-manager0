@@ -53,3 +53,5 @@ def _seed():
 def startup():
     init_db()
     _seed()
+
+    
