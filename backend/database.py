@@ -12,7 +12,7 @@ engine = create_engine(DATABASE_URL, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-Table Users (employeurs et employés) :
+# Table Users (employeurs et employés) :
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
@@ -25,3 +25,37 @@ class User(Base):
     actif = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     fiches = relationship('FicheDePaie', back_populates='employe', foreign_keys='FicheDePaie.employe_id')
+    
+class FicheDePaie(Base):
+    __tablename__ = 'fiches_de_paie'
+    id = Column(Integer, primary_key=True)
+    employe_id = Column(Integer, ForeignKey('users.id'))
+    employeur_id = Column(Integer, ForeignKey('users.id'))
+    mois = Column(String)
+    annee = Column(Integer)
+    salaire_brut = Column(Float)
+    salaire_net = Column(Float)
+    cotisations = Column(Float)
+    pdf_path = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    employe = relationship('User', foreign_keys=[employe_id], back_populates='fiches')
+    employeur = relationship('User', foreign_keys=[employeur_id])
+
+class HistoriqueEnvoi(Base):
+    __tablename__ = 'historique_envois'
+    id = Column(Integer, primary_key=True)
+    fiche_id = Column(Integer, ForeignKey('fiches_de_paie.id'))
+    date_envoi = Column(DateTime, default=datetime.utcnow)
+    email_destinataire = Column(String)
+    statut = Column(String)
+    fiche = relationship('FicheDePaie')
+    
+def init_db():
+    Base.metadata.create_all(bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
